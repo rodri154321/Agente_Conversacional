@@ -14,5 +14,5 @@
 
 ## Google Sheets
 1. Crear nueva hoja de cálculo
-2. Seguir estructura definida en `google-sheets/estructura-datos.md`
+2. Seguir estructura definida en `https://docs.google.com/spreadsheets/d/1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg/edit?usp=sharing`
 3. Compartir con el service account de n8n
