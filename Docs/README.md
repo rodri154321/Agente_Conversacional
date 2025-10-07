@@ -1,4 +1,4 @@
-# 🤖 Agente de Análisis de Reputación - MMI Analytics
+# 🤖 Agente de Análisis de Reputación
 
 **Desarrollado por: Rodrigo Amaya**  
 *Prueba Técnica - Agente Conversacional para Análisis de Reputación*

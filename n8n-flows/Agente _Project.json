@@ -1,0 +1,825 @@
+{
+  "name": "Agente Project",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agente_prueba",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        -288
+      ],
+      "id": "dcd6be5b-bbd4-454d-8b85-062af072482b",
+      "name": "Webhook",
+      "webhookId": "0d0c648a-0478-44cf-adac-b9454ef1575c"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d590ce9e-6bd8-47e9-80fc-da9d2c25fbe8",
+              "name": "=id_sesion",
+              "value": "={{ $json.body.id_sesion }}",
+              "type": "string"
+            },
+            {
+              "id": "f61711d7-568a-4500-858d-1227f1bf038d",
+              "name": "paso_actual",
+              "value": "\"inicio\"",
+              "type": "string"
+            },
+            {
+              "id": "cdcda3b4-a036-4729-918b-670e6154ea75",
+              "name": "tipo",
+              "value": "\"\"",
+              "type": "string"
+            },
+            {
+              "id": "339228e6-2ef6-4657-9d05-c442582dce61",
+              "name": "nombre",
+              "value": "\"\"",
+              "type": "string"
+            },
+            {
+              "id": "441fabcf-8bc2-4feb-86ff-eef4a4306559",
+              "name": "periodo",
+              "value": "\"\"",
+              "type": "string"
+            },
+            {
+              "id": "776b268e-8043-4181-913a-3acc9fb9f088",
+              "name": "aspecto",
+              "value": "\"\"",
+              "type": "string"
+            },
+            {
+              "id": "06057caf-f1b8-4342-ad7b-557e0b89ba74",
+              "name": "received_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "73783379-ab1f-4505-a474-c1170469ac9e",
+              "name": "=mensaje_usuario",
+              "value": "={{ $json.body.mensaje_usuario }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        -288
+      ],
+      "id": "dd6828b6-8657-4a06-8da8-6c1f900f8a84",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg",
+          "mode": "list",
+          "cachedResultName": "AgenteConversacional_Prueba",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "conversaciones",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id_sesion",
+              "lookupValue": "={{ $json.id_sesion }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        48,
+        -288
+      ],
+      "id": "1c7a8734-6a54-45d2-9ad3-59e0f49d88e5",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YWZJN3bU2tm9EMsZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7c64e6fe-96dd-47f6-8536-46754aebcdb0",
+              "leftValue": "={{ $json.id_sesion }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "1522369f-99a9-44f3-9490-9d964982bfa8",
+              "leftValue": "={{ $json.paso_actual }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        -288
+      ],
+      "id": "38a88ea8-ef92-4282-803a-9a3008df3af0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ====================================================\n// CODE PARA USUARIO EXISTENTE\n// Este código se ejecuta cuando SÍ se encontró la conversación\n// ====================================================\n\n// Obtener datos guardados en Google Sheets\nconst datosGuardados = $input.item.json;\n\n// Obtener el mensaje actual del usuario\nconst datosActuales = $('Edit Fields').first().json;\nconst mensaje = datosActuales.mensaje_usuario.toLowerCase();\nconst idSesion = datosActuales.id_sesion;\n\n// Recuperar estado guardado\nlet paso_actual = datosGuardados.paso_actual;\nlet tipo = datosGuardados.tipo || '';\nlet nombre = datosGuardados.nombre || '';\nlet periodo = datosGuardados.periodo || '';\nlet aspecto = datosGuardados.aspecto || '';\n\n// Variables para la respuesta\nlet respuesta = '';\nlet nuevoPaso = '';\n\n// ====================================================\n// MÁQUINA DE ESTADOS - LÓGICA DE CONVERSACIÓN\n// ====================================================\n\nswitch(paso_actual) {\n  \n  // ============================================\n  // PASO: TIPO\n  // ============================================\n  case 'tipo':\n    if (mensaje.includes('hotel') || mensaje.includes('1')) {\n      tipo = 'hotel';\n      respuesta = '🏨 Perfecto. ¿Cuál es el nombre del hotel que quieres analizar?\\n\\nEjemplo: Hotel Botánico, Iberostar Anthelia, etc.';\n      nuevoPaso = 'nombre';\n    } \n    else if (mensaje.includes('destino') || mensaje.includes('2')) {\n      tipo = 'destino';\n      respuesta = '🏖️ Entendido. ¿Qué destino turístico quieres analizar?\\n\\nEjemplo: Costa Adeje, Puerto de la Cruz, Playa del Inglés, etc.';\n      nuevoPaso = 'nombre';\n    } \n    else if (mensaje.includes('comparar') || mensaje.includes('comparación') || mensaje.includes('competencia') || mensaje.includes('3')) {\n      tipo = 'comparacion';\n      respuesta = '📊 Interesante. ¿Con qué hotel quieres compararte?';\n      nuevoPaso = 'nombre';\n    } \n    else {\n      respuesta = '❓ No entendí bien tu respuesta.\\n\\nPor favor, selecciona una opción:\\n1️⃣ Hotel específico\\n2️⃣ Destino turístico\\n3️⃣ Comparación con competencia';\n      nuevoPaso = 'tipo'; // Se queda en el mismo paso\n    }\n    break;\n  \n  // ============================================\n  // PASO: NOMBRE\n  // ============================================\n  case 'nombre':\n    nombre = mensaje;\n    respuesta = `✅ Perfecto, vamos a analizar: \"${nombre}\"\\n\\n📅 ¿Qué período de tiempo quieres revisar?\\n\\n1️⃣ Último mes\\n2️⃣ Últimos 3 meses\\n3️⃣ Último año\\n4️⃣ Temporada alta (Julio-Septiembre)`;\n    nuevoPaso = 'periodo';\n    break;\n  \n  // ============================================\n  // PASO: PERIODO\n  // ============================================\n  case 'periodo':\n    if (mensaje.includes('mes') || mensaje.includes('1')) {\n      periodo = 'ultimo_mes';\n      respuesta = '📊 Último mes seleccionado.';\n    } \n    else if (mensaje.includes('3') || mensaje.includes('tres')) {\n      periodo = 'tres_meses';\n      respuesta = '📊 Últimos 3 meses seleccionados.';\n    } \n    else if (mensaje.includes('año') || mensaje.includes('4')) {\n      periodo = 'ultimo_año';\n      respuesta = '📊 Último año seleccionado.';\n    } \n    else if (mensaje.includes('temporada') || mensaje.includes('alta') || mensaje.includes('5')) {\n      periodo = 'temporada_alta';\n      respuesta = '📊 Temporada alta (Jul-Sep) seleccionada.';\n    } \n    else {\n      periodo = 'ultimo_mes';\n      respuesta = '📊 Usaré el último mes por defecto.';\n    }\n    \n    respuesta += '\\n\\n🔍 ¿Qué aspecto específico te interesa analizar?\\n\\n1️⃣ Limpieza\\n2️⃣ Comida/Restaurante\\n3️⃣ Personal/Servicio\\n4️⃣ Instalaciones\\n5️⃣ Análisis General';\n    nuevoPaso = 'aspecto';\n    break;\n  \n  // ============================================\n  // PASO: ASPECTO\n  // ============================================\n  case 'aspecto':\n    if (mensaje.includes('limpieza') || mensaje.includes('1')) {\n      aspecto = 'limpieza';\n      respuesta = '🧹 Aspecto de limpieza seleccionado.';\n    } \n    else if (mensaje.includes('comida') || mensaje.includes('restaurante') || mensaje.includes('buffet') || mensaje.includes('2')) {\n      aspecto = 'comida';\n      respuesta = '🍽️ Aspecto de comida seleccionado.';\n    } \n    else if (mensaje.includes('personal') || mensaje.includes('servicio') || mensaje.includes('staff') || mensaje.includes('3')) {\n      aspecto = 'personal';\n      respuesta = '👥 Aspecto de personal seleccionado.';\n    } \n    else if (mensaje.includes('instalaciones') || mensaje.includes('instalación') || mensaje.includes('4')) {\n      aspecto = 'instalaciones';\n      respuesta = '🏊 Aspecto de instalaciones seleccionado.';\n    } \n    else {\n      aspecto = 'general';\n      respuesta = '📋 Análisis general seleccionado.';\n    }\n    \n    respuesta += `\\n\\n⏳ Perfecto! Estoy generando tu análisis sobre ${aspecto} de \"${nombre}\"...\\n\\nEsto tomará unos segundos. ⏱️`;\n    nuevoPaso = 'analisis';\n    break;\n  \n  // ============================================\n  // PASO: ANÁLISIS (Aquí en Día 4 llamarás a la API)\n  // ============================================\n  case 'analisis':\n    respuesta = `✅ ¡Tu análisis de ${aspecto} está listo!\\n\\n[Aquí irá el análisis en el Día 4]\\n\\n¿Qué deseas hacer?\\n1️⃣ Ver más detalles\\n2️⃣ Hacer otra consulta\\n3️⃣ Finalizar`;\n    nuevoPaso = 'finalizado';\n    break;\n  \n  // ============================================\n  // PASO: FINALIZADO\n  // ============================================\n  case 'finalizado':\n    if (mensaje.includes('detalle') || mensaje.includes('1')) {\n      respuesta = '📊 Aquí están los detalles adicionales...\\n\\n[Más información en Día 4]';\n      nuevoPaso = 'finalizado';\n    } \n    else if (mensaje.includes('otra') || mensaje.includes('consulta') || mensaje.includes('2')) {\n      respuesta = '🔄 Perfecto! Empecemos de nuevo.\\n\\n¿Qué te gustaría analizar?\\n\\n1️⃣ Hotel específico\\n2️⃣ Destino turístico\\n3️⃣ Comparación con competencia';\n      nuevoPaso = 'tipo';\n      tipo = '';\n      nombre = '';\n      periodo = '';\n      aspecto = '';\n    } \n    else {\n      respuesta = '👋 ¡Gracias por usar el asistente de análisis! Que tengas un excelente día.';\n      nuevoPaso = 'fin';\n    }\n    break;\n  \n  // ============================================\n  // CASO DEFAULT (Error o paso no reconocido)\n  // ============================================\n  default:\n    respuesta = '❌ Hubo un error en la conversación. Empecemos de nuevo.\\n\\n¿Qué te gustaría analizar?\\n\\n1️⃣ Hotel específico\\n2️⃣ Destino turístico\\n3️⃣ Comparación con competencia';\n    nuevoPaso = 'tipo';\n    tipo = '';\n    nombre = '';\n    periodo = '';\n    aspecto = '';\n}\n\n// ====================================================\n// RETORNAR RESULTADO\n// ====================================================\nreturn {\n  json: {\n    id_sesion: idSesion,\n    mensaje_usuario: datosActuales.mensaje_usuario,\n    respuesta: respuesta,\n    paso_anterior: paso_actual,\n    nuevo_paso: nuevoPaso,\n    tipo: tipo,\n    nombre: nombre,\n    periodo: periodo,\n    aspecto: aspecto,\n    timestamp: new Date().toISOString(),\n    usuario_tipo: 'existente'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -368
+      ],
+      "id": "64efc3be-2802-4671-b0ed-cf85c1c02e82",
+      "name": "Usuario EXISTENTE"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ====================================================\n// CODE PARA USUARIO NUEVO\n// Este código se ejecuta cuando NO se encontró la conversación\n// ====================================================\n\n// Obtener datos del mensaje original\nconst datosActuales = $('Edit Fields').first().json;\nconst mensaje = datosActuales.mensaje_usuario.toLowerCase();\nconst idSesion = datosActuales.id_sesion;\n\n// Inicializar variables de conversación\nlet paso_actual = 'inicio';\nlet tipo = '';\nlet nombre = '';\nlet periodo = '';\nlet aspecto = '';\n\n// Variables para la respuesta\nlet respuesta = '';\nlet nuevoPaso = '';\n\n// ====================================================\n// LÓGICA PARA USUARIO NUEVO\n// Siempre empieza en \"inicio\" pero puede detectar intenciones\n// ====================================================\n\n// Detectar si el usuario ya especificó algo en su primer mensaje\nif (mensaje.includes('hotel') && !mensaje.includes('destino')) {\n  // Usuario dijo directamente \"hotel\"\n  tipo = 'hotel';\n  respuesta = '🏨 Perfecto! Veo que quieres analizar un hotel.\\n\\n¿Cuál es el nombre del hotel?';\n  nuevoPaso = 'nombre';\n} \nelse if (mensaje.includes('destino')) {\n  // Usuario dijo \"destino\"\n  tipo = 'destino';\n  respuesta = '🏖️ Entendido! Quieres analizar un destino.\\n\\n¿Qué destino turístico te interesa?';\n  nuevoPaso = 'nombre';\n} \nelse if (mensaje.includes('comparar') || mensaje.includes('competencia')) {\n  // Usuario dijo \"comparar\"\n  tipo = 'comparacion';\n  respuesta = '📊 Interesante! Haremos una comparación.\\n\\n¿Con qué hotel quieres compararte?';\n  nuevoPaso = 'nombre';\n} \nelse {\n  // Saludo estándar para usuario nuevo\n  respuesta = '¡Hola! 👋 Bienvenido al asistente de análisis de reputación.\\n\\nSoy tu ayudante para analizar menciones de hoteles y destinos en TripAdvisor.\\n\\n¿Qué te gustaría analizar?\\n\\n1️⃣ Hotel específico\\n2️⃣ Destino turístico\\n3️⃣ Comparación con competencia';\n  nuevoPaso = 'tipo';\n}\n\n// ====================================================\n// RETORNAR RESULTADO\n// ====================================================\nreturn {\n  json: {\n    id_sesion: idSesion,\n    mensaje_usuario: datosActuales.mensaje_usuario,\n    respuesta: respuesta,\n    paso_anterior: paso_actual,\n    nuevo_paso: nuevoPaso,\n    tipo: tipo,\n    nombre: nombre,\n    periodo: periodo,\n    aspecto: aspecto,\n    timestamp: new Date().toISOString(),\n    usuario_tipo: 'nuevo'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -176
+      ],
+      "id": "261d9133-736d-4459-89bb-e2568fdd3238",
+      "name": "Usuario NUEVO"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg",
+          "mode": "list",
+          "cachedResultName": "AgenteConversacional_Prueba",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 566364193,
+          "mode": "list",
+          "cachedResultName": "conversaciones",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg/edit#gid=566364193"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id_sesion": "={{ $json.id_sesion }}",
+            "tipo": "={{ $json.tipo }}",
+            "nombre": "={{ $json.nombre }}",
+            "periodo": "={{ $json.periodo }}",
+            "aspecto": "={{ $json.aspecto }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "paso_actual": "={{ $json.paso_actual }}"
+          },
+          "matchingColumns": [
+            "id_sesion"
+          ],
+          "schema": [
+            {
+              "id": "id_sesion",
+              "displayName": "id_sesion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "paso_actual",
+              "displayName": "paso_actual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "periodo",
+              "displayName": "periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "aspecto",
+              "displayName": "aspecto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2272,
+        -336
+      ],
+      "id": "1eacb7a4-e677-4424-ad19-f35deb6c2ff8",
+      "name": "Actualizar Conversaciones",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YWZJN3bU2tm9EMsZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg",
+          "mode": "list",
+          "cachedResultName": "AgenteConversacional_Prueba",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1885924929,
+          "mode": "list",
+          "cachedResultName": "mensajes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hYtVxro6DWeB34zw_AAiDiSt8RmmeqtgOGJDwZ68jg/edit#gid=1885924929"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "mensaje_usuario": "={{ $json.mensaje_usuario }}",
+            "id_sesion": "={{ $json.id_sesion }}",
+            "respuesta_agente": "={{ $json.respuesta_agente }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id_sesion",
+              "displayName": "id_sesion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "mensaje_usuario",
+              "displayName": "mensaje_usuario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "respuesta_agente",
+              "displayName": "respuesta_agente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2272,
+        -160
+      ],
+      "id": "b3e0719e-5336-4403-8fc9-9ddad1f2b74a",
+      "name": "Guardar Mensaje",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YWZJN3bU2tm9EMsZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f5888a64-45e5-404d-9d0e-91d40b18952a",
+              "name": "id_sesion",
+              "value": "={{ $json.id_sesion }}",
+              "type": "string"
+            },
+            {
+              "id": "3226e2c1-3b22-480c-b833-6c2eb9dd65f0",
+              "name": "mensaje_usuario",
+              "value": "={{ $json.mensaje_usuario }}",
+              "type": "string"
+            },
+            {
+              "id": "7c7ddd8a-f068-4c44-add4-d279231e38f3",
+              "name": "respuesta_agente",
+              "value": "={{ $json.respuesta }}",
+              "type": "string"
+            },
+            {
+              "id": "9c8eda01-123f-48d4-9d12-771789a8721d",
+              "name": "paso_actual",
+              "value": "={{ $json.nuevo_paso }}",
+              "type": "string"
+            },
+            {
+              "id": "f8e645a1-587f-4ddd-8fdf-ed6337dd28e9",
+              "name": "tipo",
+              "value": "={{ $json.tipo }}",
+              "type": "string"
+            },
+            {
+              "id": "953f5013-5ecf-4bd9-a30d-1b7137c65266",
+              "name": "nombre",
+              "value": "={{ $json.nombre }}",
+              "type": "string"
+            },
+            {
+              "id": "e299aa1b-c115-4bdc-bb39-c37f71136b56",
+              "name": "periodo",
+              "value": "={{ $json.periodo }}",
+              "type": "string"
+            },
+            {
+              "id": "f8228989-e108-4509-af94-644341b669d1",
+              "name": "aspecto",
+              "value": "={{ $json.aspecto }}",
+              "type": "string"
+            },
+            {
+              "id": "1dd84c1b-1d5d-4941-8780-53c2201921c8",
+              "name": "usuario_tipo",
+              "value": "={{ $json.usuario_tipo }}",
+              "type": "string"
+            },
+            {
+              "id": "084e47a4-8e75-4bcf-a9ce-636ed8e1e10f",
+              "name": "timestamp",
+              "value": "={{ $json.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        768,
+        -288
+      ],
+      "id": "16151222-8c3b-428f-899f-31c92e4e6acf",
+      "name": "Set INFO"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $('Merge1').item.json.respuesta_agente }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2800,
+        -256
+      ],
+      "id": "ab4b3621-30d9-494e-bde3-000442b8dec8",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2512,
+        -256
+      ],
+      "id": "98fe4150-6b2a-43dc-bc49-bfabb37d2366",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8d6cf527-d5ff-4e86-9373-71374f285650",
+              "leftValue": "={{ $json.paso_actual }}",
+              "rightValue": "analisis",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        -288
+      ],
+      "id": "35147b6f-b690-443b-98da-f03da84dabe1",
+      "name": "Es analisis?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rodrigoamaya.app.n8n.cloud/webhook/generar-comentarios",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tipo\": \"{{ $('Set INFO').item.json.tipo }}\",\n  \"nombre\": \"{{ $('Set INFO').item.json.nombre }}\",\n  \"periodo\": \"{{ $('Set INFO').item.json.periodo }}\",\n  \"aspecto\": \"{{ $('Set INFO').item.json.aspecto }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1152,
+        -400
+      ],
+      "id": "b841d437-ee9e-4a53-9bf2-e349516ad1e4",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rodrigoamaya.app.n8n.cloud/webhook/analizar-comentarios",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1584,
+        -400
+      ],
+      "id": "d4bfe4e8-f921-407f-b72f-9d18acf8c658",
+      "name": "Llamar API Analisis",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// ====================================================\n// OBTENER DATOS\n// ====================================================\n\n// Obtener análisis de la API\nconst analisis = $input.item.json;\n\n// Obtener datos de la conversación original\nconst infoConversacion = $('Set INFO').item.json;\n\n// ====================================================\n// VERIFICAR SI HUBO ERROR\n// ====================================================\n\nif (analisis.error || !analisis.success) {\n  return {\n    json: {\n      ...infoConversacion,\n      respuesta: \"❌ Lo siento, hubo un problema al generar el análisis. Por favor intenta nuevamente más tarde.\",\n      nuevo_paso: \"finalizado\"\n    }\n  };\n}\n\n// ====================================================\n// FORMATEAR RESPUESTA CON EL ANÁLISIS\n// ====================================================\n\nlet respuestaFormateada = `✅ **Análisis completado: ${infoConversacion.nombre}**\\n\\n`;\n\n// Resumen ejecutivo\nrespuestaFormateada += `📝 **Resumen:**\\n${analisis.resumen_ejecutivo}\\n\\n`;\n\n// Métricas principales\nrespuestaFormateada += `📊 **Métricas clave:**\\n`;\nrespuestaFormateada += `• Total de comentarios analizados: ${analisis.resumen.total_comentarios}\\n`;\nrespuestaFormateada += `• Nivel de satisfacción: ${analisis.resumen.nivel_satisfaccion} (${analisis.resumen.puntuacion_promedio}/5 ⭐)\\n`;\nrespuestaFormateada += `• Comentarios positivos: ${analisis.resumen.porcentaje_positivos}%\\n`;\nrespuestaFormateada += `• Comentarios negativos: ${analisis.resumen.porcentaje_negativos}%\\n`;\nif (analisis.resumen.neutros > 0) {\n  respuestaFormateada += `• Comentarios neutros: ${analisis.resumen.porcentaje_neutros}%\\n`;\n}\nrespuestaFormateada += `\\n`;\n\n// Problemas identificados\nif (analisis.problemas_identificados && analisis.problemas_identificados.length > 0) {\n  respuestaFormateada += `⚠️ **Problemas identificados:**\\n`;\n  analisis.problemas_identificados.slice(0, 3).forEach((problema, idx) => {\n    respuestaFormateada += `   ${idx + 1}. ${problema}\\n`;\n  });\n  respuestaFormateada += `\\n`;\n} else {\n  respuestaFormateada += `✅ **No se identificaron problemas críticos**\\n\\n`;\n}\n\n// Fortalezas\nif (analisis.fortalezas && analisis.fortalezas.length > 0) {\n  respuestaFormateada += `💪 **Fortalezas destacadas:**\\n`;\n  analisis.fortalezas.slice(0, 3).forEach((fortaleza, idx) => {\n    respuestaFormateada += `   ${idx + 1}. ${fortaleza}\\n`;\n  });\n  respuestaFormateada += `\\n`;\n}\n\n// Recomendaciones\nif (analisis.recomendaciones && analisis.recomendaciones.length > 0) {\n  respuestaFormateada += `💡 **Recomendaciones:**\\n`;\n  \n  // Filtrar por prioridad\n  const altaPrioridad = analisis.recomendaciones.filter(r => r.prioridad === 'alta');\n  const mediaPrioridad = analisis.recomendaciones.filter(r => r.prioridad === 'media');\n  \n  if (altaPrioridad.length > 0) {\n    respuestaFormateada += `\\n🔴 **Alta prioridad:**\\n`;\n    altaPrioridad.forEach((rec, idx) => {\n      respuestaFormateada += `   ${idx + 1}. ${rec.accion}\\n`;\n    });\n  }\n  \n  if (mediaPrioridad.length > 0 && mediaPrioridad.length <= 2) {\n    respuestaFormateada += `\\n🟡 **Media prioridad:**\\n`;\n    mediaPrioridad.slice(0, 2).forEach((rec, idx) => {\n      respuestaFormateada += `   ${idx + 1}. ${rec.accion}\\n`;\n    });\n  }\n  \n  respuestaFormateada += `\\n`;\n}\n\n// Tendencia temporal\nif (analisis.tendencia_temporal && analisis.tendencia_temporal !== 'No hay suficientes datos temporales') {\n  respuestaFormateada += `📅 **Tendencia temporal:**\\n${analisis.tendencia_temporal}\\n\\n`;\n}\n\n// Separador\nrespuestaFormateada += `━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n`;\n\n// Opciones finales\nrespuestaFormateada += `¿Qué deseas hacer ahora?\\n`;\nrespuestaFormateada += `1️⃣ Hacer otra consulta\\n`;\nrespuestaFormateada += `2️⃣ Finalizar`;\n\n// ====================================================\n// RETORNAR RESPUESTA FORMATEADA\n// ====================================================\n\nreturn {\n  json: {\n    id_sesion: infoConversacion.id_sesion,\n    mensaje_usuario: infoConversacion.mensaje_usuario,\n    respuesta_agente: respuestaFormateada,\n    paso_anterior: infoConversacion.paso_anterior,\n    paso_actual: \"finalizado\",\n    tipo: infoConversacion.tipo,\n    nombre: infoConversacion.nombre,\n    periodo: infoConversacion.periodo,\n    aspecto: infoConversacion.aspecto,\n    analisis_completo: analisis,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        -400
+      ],
+      "id": "ff00f338-18d7-4071-8dc2-9144e4ec2ec3",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2000,
+        -288
+      ],
+      "id": "f40f5349-9664-4ff1-a682-5faec112af28",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener respuesta de la API de comentarios\nconst respuestaAPI = $input.first().json;\n\n// Extraer el primer elemento si es un array\nconst datos = Array.isArray(respuestaAPI) ? respuestaAPI[0] : respuestaAPI;\n\n// Obtener datos de la conversación\nconst infoConversacion = $(\"Set INFO\").first().json;\n\n// Verificar que existan comentarios\nif (!datos.comentarios || datos.comentarios.length === 0) {\n  return {\n    json: {\n      error: true,\n      mensaje: \"No se generaron comentarios\",\n    },\n  };\n}\n\n// Preparar estructura para el análisis\nreturn {\n  json: {\n    json: {\n      comentarios: datos.comentarios,\n      metadata: {\n        tipo: infoConversacion.tipo,\n        nombre: infoConversacion.nombre,\n        periodo: infoConversacion.periodo,\n        aspecto: infoConversacion.aspecto,\n      },\n    },\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        -400
+      ],
+      "id": "67d08bb7-acf2-4fcb-a0f7-672c135383f0",
+      "name": "Preparar Comentarios"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Usuario EXISTENTE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Usuario NUEVO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Usuario NUEVO": {
+      "main": [
+        [
+          {
+            "node": "Set INFO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Usuario EXISTENTE": {
+      "main": [
+        [
+          {
+            "node": "Set INFO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Conversaciones": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Set INFO": {
+      "main": [
+        [
+          {
+            "node": "Es analisis?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es analisis?": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Preparar Comentarios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar API Analisis": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Guardar Mensaje",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Actualizar Conversaciones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Comentarios": {
+      "main": [
+        [
+          {
+            "node": "Llamar API Analisis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "be8c14a5-c539-456d-a0ae-7b6996330d3e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ce09a7a8ff547fda6a7e9fa3b3e0205239479ec37afde273eaa6c341c6a8c176"
+  },
+  "id": "i7GQvFZtIq8Ad1bL",
+  "tags": []
+}

@@ -1,0 +1,107 @@
+{
+  "name": "API_Comentarios",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generar-comentarios",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ad6152d3-ebe8-4c0a-ad50-7aee509269a7",
+      "name": "Webhook",
+      "webhookId": "00d6cec1-a959-4b4e-85eb-2fb631dc38f9"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener parámetros del body\nconst body = $input.item.json.body || $input.item.json;\n\nconst tipo = body.tipo;\nconst nombre = body.nombre;\nconst periodo = body.periodo;\nconst aspecto = body.aspecto;\n\n// Validar que existan todos los parámetros\nif (!tipo || !nombre || !periodo || !aspecto) {\n  return {\n    json: {\n      error: true,\n      mensaje: \"Faltan parámetros. Se requiere: tipo, nombre, periodo, aspecto\",\n      parametros_recibidos: { tipo, nombre, periodo, aspecto }\n    }\n  };\n}\n\n// Si todo está bien, pasar los datos validados\nreturn {\n  json: {\n    error: false,\n    tipo: tipo,\n    nombre: nombre,\n    periodo: periodo,\n    aspecto: aspecto\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "68e6fc2f-82c5-4a68-b2a5-e65a424ef1e3",
+      "name": "Validar Parametros"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener parámetros validados\nconst params = $input.item.json;\n\n// Verificar si hubo error en validación\nif (params.error) {\n  return { json: params };\n}\n\nconst tipo = params.tipo;\nconst nombre = params.nombre;\nconst periodo = params.periodo;\nconst aspecto = params.aspecto;\n\n// ====================================================\n// BASE DE DATOS DE COMENTARIOS POR ASPECTO\n// ====================================================\n\nconst comentariosBase = {\n  limpieza: {\n    positivos: [\n      \"Las habitaciones estaban impecables, muy limpias\",\n      \"Excelente limpieza en todas las áreas del hotel\",\n      \"El housekeeping hace un trabajo fantástico\",\n      \"Toallas siempre limpias y perfumadas\",\n      \"La habitación olía a limpio al entrar\",\n      \"Limpieza impecable, sin ninguna queja\",\n      \"Personal de limpieza muy atento y eficiente\",\n      \"Baños relucientes, todo muy higiénico\",\n      \"Cambio de sábanas diario, muy profesional\",\n      \"Áreas comunes siempre impecables\",\n      \"La piscina estaba muy limpia\",\n      \"Cristales y ventanas perfectamente limpios\",\n      \"No encontramos ni una mota de polvo\",\n      \"Limpieza de 10, todo brillante\",\n      \"Habitación desinfectada y ordenada\",\n      \"Alfombras y suelos impecables\",\n      \"Baño como nuevo, muy limpio\",\n      \"Personal de limpieza muy discreto y efectivo\",\n      \"Todo desinfectado y en orden\",\n      \"La mejor limpieza que hemos visto en años\"\n    ],\n    negativos: [\n      \"La limpieza de las habitaciones dejaba mucho que desear\",\n      \"Encontramos pelos en el baño\",\n      \"Las sábanas no parecían recién cambiadas\",\n      \"Polvo acumulado en los muebles\",\n      \"El baño tenía manchas de humedad\",\n      \"Habitación sucia al llegar\",\n      \"Toallas con manchas\",\n      \"Suelo del baño sucio\",\n      \"Basura del huésped anterior aún en la papelera\",\n      \"Ventanas sucias, no se podía ver bien\",\n      \"Alfombra con manchas visibles\",\n      \"Piscina turbia y sucia\",\n      \"Áreas comunes descuidadas\",\n      \"Limpieza muy básica, poco profesional\",\n      \"Ropa de cama dudosa\",\n      \"Baño con restos de productos anteriores\",\n      \"Polvo en lámparas y techos\",\n      \"Cortinas sucias y polvorientas\",\n      \"Balcón sin barrer\",\n      \"Habitación con olor extraño por falta de limpieza\"\n    ]\n  },\n  \n  comida: {\n    positivos: [\n      \"El restaurante buffet tiene gran variedad\",\n      \"Comida deliciosa y fresca todos los días\",\n      \"El desayuno es espectacular\",\n      \"Chef muy talentoso, platos exquisitos\",\n      \"Gran variedad de comida internacional\",\n      \"Productos frescos y de calidad\",\n      \"Buffet con opciones para todos los gustos\",\n      \"Comida típica canaria deliciosa\",\n      \"Postres increíbles, muy variados\",\n      \"Fruta fresca y de temporada\",\n      \"Opciones vegetarianas excelentes\",\n      \"Mariscos fresquísimos\",\n      \"Carnes a la parrilla perfectas\",\n      \"Panadería propia, pan recién hecho\",\n      \"Bebidas de calidad incluidas\",\n      \"Restaurante temático muy bueno\",\n      \"Servicio en el restaurante impecable\",\n      \"Cenas románticas espectaculares\",\n      \"Comida buffet con nivel de restaurante\",\n      \"Cocina en vivo, todo fresco\"\n    ],\n    negativos: [\n      \"La comida es repetitiva y sin sabor\",\n      \"Poca variedad en el menú\",\n      \"El buffet siempre tiene lo mismo\",\n      \"Comida fría o recalentada\",\n      \"Calidad muy baja para el precio\",\n      \"Frutas pasadas o verdes\",\n      \"Platos principales sin gusto\",\n      \"Postres industriales de baja calidad\",\n      \"Opciones vegetarianas muy limitadas\",\n      \"Comida poco fresca\",\n      \"Buffet vacío al llegar tarde\",\n      \"Pescado con mal olor\",\n      \"Carnes duras y recocidas\",\n      \"Pan duro del día anterior\",\n      \"Bebidas muy diluidas\",\n      \"Restaurante a la carta decepcionante\",\n      \"Comida sin sazón ni sabor\",\n      \"Variedad muy pobre\",\n      \"Calidad inferior a otros hoteles\",\n      \"Desayuno continental muy básico\"\n    ]\n  },\n  \n  personal: {\n    positivos: [\n      \"El personal es muy amable y atento\",\n      \"Excelente servicio al cliente\",\n      \"Los empleados siempre con una sonrisa\",\n      \"Recepcionistas muy profesionales\",\n      \"Personal políglota, hablan varios idiomas\",\n      \"Camareros atentos y serviciales\",\n      \"Animadores muy simpáticos\",\n      \"Personal de mantenimiento eficiente\",\n      \"Nos trataron como en casa\",\n      \"Staff muy resolutivo con problemas\",\n      \"Conserje muy útil y amable\",\n      \"Personal del spa excelente\",\n      \"Todos muy educados y profesionales\",\n      \"Nos ayudaron con excursiones\",\n      \"Personal de bar muy agradable\",\n      \"Atención personalizada increíble\",\n      \"Siempre dispuestos a ayudar\",\n      \"Trato familiar y cercano\",\n      \"Personal muy preparado\",\n      \"Servicio de habitaciones impecable\"\n    ],\n    negativos: [\n      \"Personal poco profesional\",\n      \"Tuvimos que esperar mucho para que nos atendieran\",\n      \"Falta de cortesía en recepción\",\n      \"Camareros antipáticos\",\n      \"Empleados desorganizados\",\n      \"Nadie habla español correctamente\",\n      \"Personal maleducado\",\n      \"Nos ignoraron varias veces\",\n      \"Respuestas cortantes y desagradables\",\n      \"Falta de formación del personal\",\n      \"No resuelven los problemas\",\n      \"Personal sobrepasado por el trabajo\",\n      \"Camareros insistentes con las propinas\",\n      \"Recepcionistas poco atentos\",\n      \"Animadores molestos\",\n      \"Staff indiferente a las quejas\",\n      \"Mal trato a los clientes\",\n      \"Personal desmotivado\",\n      \"Ninguno ayuda con información\",\n      \"Actitud poco profesional generalizada\"\n    ]\n  },\n  \n  instalaciones: {\n    positivos: [\n      \"Las instalaciones están muy bien mantenidas\",\n      \"Piscina hermosa y limpia\",\n      \"Gimnasio bien equipado\",\n      \"Habitaciones renovadas recientemente\",\n      \"Spa de primera calidad\",\n      \"Jardines preciosos y cuidados\",\n      \"Zona infantil muy completa\",\n      \"Instalaciones modernas\",\n      \"Piscina climatizada perfecta\",\n      \"Terraza con vistas espectaculares\",\n      \"Zonas comunes amplias y bonitas\",\n      \"Decoración elegante y moderna\",\n      \"Camas comodísimas\",\n      \"Baños renovados y funcionales\",\n      \"Aire acondicionado silencioso\",\n      \"WiFi excelente en todo el hotel\",\n      \"Ascensores rápidos y modernos\",\n      \"Parking amplio y seguro\",\n      \"Zona de piscina con tumbonas suficientes\",\n      \"Instalaciones deportivas completas\"\n    ],\n    negativos: [\n      \"Las instalaciones necesitan renovación urgente\",\n      \"La piscina estaba sucia\",\n      \"Ascensores viejos y lentos\",\n      \"Habitaciones muy anticuadas\",\n      \"Gimnasio sin mantenimiento\",\n      \"Mobiliario deteriorado\",\n      \"Instalaciones viejas y descuidadas\",\n      \"Aire acondicionado ruidoso\",\n      \"WiFi muy lento o inexistente\",\n      \"Colchones hundidos e incómodos\",\n      \"Baños viejos con humedades\",\n      \"Piscina muy pequeña para tanta gente\",\n      \"Falta de tumbonas\",\n      \"Zonas comunes oscuras y feas\",\n      \"Instalaciones deportivas abandonadas\",\n      \"Spa cerrado sin aviso\",\n      \"Jardines descuidados\",\n      \"Parking insuficiente\",\n      \"Decoración antigua y deprimente\",\n      \"Todo necesita una reforma\"\n    ]\n  }\n};\n\n// ====================================================\n// GENERAR COMENTARIOS ALEATORIOS\n// ====================================================\n\n// Determinar cuántos comentarios generar (entre 3 y 5)\nconst numComentarios = Math.floor(Math.random() * 3) + 3;\nconst comentarios = [];\n\n// Obtener comentarios del aspecto solicitado\nconst aspectoComentarios = comentariosBase[aspecto] || comentariosBase.limpieza;\n\n// Generar cada comentario\nfor (let i = 0; i < numComentarios; i++) {\n  // 60% positivos, 40% negativos (más realista)\n  const sentimiento = Math.random() > 0.4 ? 'positivo' : 'negativo';\n  \n  // Seleccionar texto aleatorio según sentimiento\n  const listaTextos = sentimiento === 'positivo' \n    ? aspectoComentarios.positivos \n    : aspectoComentarios.negativos;\n  \n  const texto = listaTextos[Math.floor(Math.random() * listaTextos.length)];\n  \n  // Generar fecha aleatoria dentro del período\n  let diasAtras;\n  switch(periodo) {\n    case 'ultimo_mes':\n      diasAtras = Math.floor(Math.random() * 30);\n      break;\n    case 'tres_meses':\n      diasAtras = Math.floor(Math.random() * 90);\n      break;\n    case 'ultimo_año':\n      diasAtras = Math.floor(Math.random() * 365);\n      break;\n    case 'temporada_alta':\n      // Jul-Sep del año actual (aprox 60-150 días atrás)\n      diasAtras = Math.floor(Math.random() * 90) + 60;\n      break;\n    default:\n      diasAtras = Math.floor(Math.random() * 30);\n  }\n  \n  const fecha = new Date();\n  fecha.setDate(fecha.getDate() - diasAtras);\n  \n  // Generar puntuación según sentimiento\n  const puntuacion = sentimiento === 'positivo' \n    ? Math.floor(Math.random() * 2) + 4  // 4 o 5 estrellas\n    : Math.floor(Math.random() * 3) + 1; // 1, 2 o 3 estrellas\n  \n  // Crear comentario\n  comentarios.push({\n    id: `comment_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,\n    texto: texto,\n    sentimiento: sentimiento,\n    fecha: fecha.toISOString().split('T')[0],\n    puntuacion: puntuacion,\n    aspecto_principal: aspecto,\n    fuente: 'TripAdvisor'\n  });\n}\n\n// ====================================================\n// CALCULAR MÉTRICAS\n// ====================================================\n\nconst totalComentarios = comentarios.length;\nconst positivos = comentarios.filter(c => c.sentimiento === 'positivo').length;\nconst negativos = comentarios.filter(c => c.sentimiento === 'negativo').length;\nconst neutros = totalComentarios - positivos - negativos;\n\nconst porcentajePositivos = Math.round((positivos / totalComentarios) * 100);\nconst porcentajeNegativos = Math.round((negativos / totalComentarios) * 100);\nconst porcentajeNeutros = Math.round((neutros / totalComentarios) * 100);\n\n// ====================================================\n// RETORNAR RESPUESTA\n// ====================================================\n\nreturn {\n  json: {\n    success: true,\n    comentarios: comentarios,\n    metadata: {\n      tipo: tipo,\n      nombre: nombre,\n      periodo: periodo,\n      aspecto: aspecto,\n      total: totalComentarios,\n      positivos: positivos,\n      negativos: negativos,\n      neutros: neutros,\n      porcentaje_positivos: porcentajePositivos,\n      porcentaje_negativos: porcentajeNegativos,\n      porcentaje_neutros: porcentajeNeutros,\n      fecha_generacion: new Date().toISOString()\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        0
+      ],
+      "id": "32dbe74d-6d9d-4f60-9d54-664981d98a0b",
+      "name": "Generar Comentarios"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        640,
+        0
+      ],
+      "id": "386587a3-dd35-40da-aff2-bacef4211aae",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validar Parametros",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Parametros": {
+      "main": [
+        [
+          {
+            "node": "Generar Comentarios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Comentarios": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "709fcd0f-c6e0-441a-af85-1e7293565432",
+  "meta": {
+    "instanceId": "ce09a7a8ff547fda6a7e9fa3b3e0205239479ec37afde273eaa6c341c6a8c176"
+  },
+  "id": "JDiGwto6ZxXsPbmf",
+  "tags": []
+}

@@ -1,0 +1,107 @@
+{
+  "name": "Analizar_Comentarios",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analizar-comentarios",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0d9c8aa2-43e7-422b-9312-62b25d8f5c03",
+      "name": "Webhook",
+      "webhookId": "39b1c1a0-43bd-4d6b-b636-14387699187d"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ====================================================\n// OBTENER DATOS - MANEJAR MÚLTIPLES ESTRUCTURAS\n// ====================================================\n\n// Obtener datos del input\nlet datos = $input.first().json.body.json;\n\n// Navegar por las diferentes capas posibles\n// (depende de cómo lleguen los datos: webhook directo, HTTP Request, etc.)\nif (datos.body) {\n  datos = datos.body;\n  \n  // Si viene anidado en body.json.body\n  if (datos.json && datos.json.body) {\n    datos = datos.json.body;\n  } \n  // Si viene en body.body\n  else if (datos.body) {\n    datos = datos.body;\n  }\n}\n\n// ====================================================\n// VALIDAR QUE EXISTAN COMENTARIOS\n// ====================================================\n\nif (!datos.comentarios) {\n  return {\n    json: {\n      error: true,\n      mensaje: \"Formato inválido. Se requiere un array 'comentarios'\",\n      datos_recibidos: datos, // Para debugging\n      ejemplo: {\n        comentarios: [\n          {\n            texto: \"...\",\n            sentimiento: \"positivo/negativo/neutro\",\n            aspecto_principal: \"limpieza/comida/personal/instalaciones\"\n          }\n        ]\n      }\n    }\n  };\n}\n\n// Verificar que comentarios sea un array\nif (!Array.isArray(datos.comentarios)) {\n  return {\n    json: {\n      error: true,\n      mensaje: \"'comentarios' debe ser un array\",\n      tipo_recibido: typeof datos.comentarios,\n      ejemplo: {\n        comentarios: [\n          {\n            texto: \"...\",\n            sentimiento: \"positivo/negativo/neutro\",\n            aspecto_principal: \"limpieza/comida/personal/instalaciones\"\n          }\n        ]\n      }\n    }\n  };\n}\n\n// Verificar que tenga al menos un comentario\nif (datos.comentarios.length === 0) {\n  return {\n    json: {\n      error: true,\n      mensaje: \"El array de comentarios está vacío. Se necesita al menos 1 comentario.\"\n    }\n  };\n}\n\n// ====================================================\n// ADVERTENCIA SI HAY POCOS COMENTARIOS\n// ====================================================\n\nif (datos.comentarios.length < 3) {\n  return {\n    json: {\n      error: false,\n      advertencia: \"Pocos comentarios para un análisis robusto (menos de 3)\",\n      comentarios: datos.comentarios,\n      metadata: datos.metadata || {}\n    }\n  };\n}\n\n// ====================================================\n// TODO OK - PASAR DATOS AL SIGUIENTE NODO\n// ====================================================\n\nreturn {\n  json: {\n    error: false,\n    comentarios: datos.comentarios,\n    metadata: datos.metadata || {}\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "36dfb49f-de0a-4550-ba36-322d77dfa109",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener datos validados\nconst data = $input.first().json.datos;\n\n// Verificar si hubo error\nif ($input.first().json.error) {\n  return { json: data };\n}\n\nconst comentarios = $input.first().json.comentarios;\nconst metadata = $input.first().json.metadata;\n\n// ====================================================\n// CALCULAR MÉTRICAS BÁSICAS\n// ====================================================\n\nconst totalComentarios = comentarios.length;\nconst positivos = comentarios.filter(c => c.sentimiento === 'positivo').length;\nconst negativos = comentarios.filter(c => c.sentimiento === 'negativo').length;\nconst neutros = comentarios.filter(c => c.sentimiento === 'neutro').length;\n\nconst porcentajePositivos = Math.round((positivos / totalComentarios) * 100);\nconst porcentajeNegativos = Math.round((negativos / totalComentarios) * 100);\nconst porcentajeNeutros = Math.round((neutros / totalComentarios) * 100);\n\n// Puntuación promedio\nconst puntuaciones = comentarios.map(c => c.puntuacion || 0);\nconst puntuacionPromedio = (puntuaciones.reduce((a, b) => a + b, 0) / totalComentarios).toFixed(1);\n\n// ====================================================\n// IDENTIFICAR PALABRAS CLAVE NEGATIVAS\n// ====================================================\n\nconst palabrasNegativasComunes = {\n  limpieza: ['sucio', 'polvo', 'mancha', 'pelo', 'basura', 'olor', 'descuidado'],\n  comida: ['frío', 'repetitivo', 'insípido', 'pasado', 'recalentado', 'variedad', 'calidad'],\n  personal: ['antipático', 'maleducado', 'esperar', 'ignorar', 'cortante', 'desorganizado'],\n  instalaciones: ['viejo', 'roto', 'deteriorado', 'renovación', 'anticuado', 'humedad']\n};\n\nconst problemasIdentificados = [];\nconst comentariosNegativos = comentarios.filter(c => c.sentimiento === 'negativo');\n\n// Analizar comentarios negativos\ncomentariosNegativos.forEach(comentario => {\n  const texto = comentario.texto.toLowerCase();\n  const aspecto = comentario.aspecto_principal;\n  \n  const palabrasClave = palabrasNegativasComunes[aspecto] || [];\n  \n  palabrasClave.forEach(palabra => {\n    if (texto.includes(palabra)) {\n      // Buscar si ya existe este problema\n      const existente = problemasIdentificados.find(p => p.palabra === palabra);\n      if (existente) {\n        existente.frecuencia++;\n      } else {\n        problemasIdentificados.push({\n          palabra: palabra,\n          aspecto: aspecto,\n          frecuencia: 1\n        });\n      }\n    }\n  });\n});\n\n// Ordenar problemas por frecuencia\nproblemasIdentificados.sort((a, b) => b.frecuencia - a.frecuencia);\n\n// Top 5 problemas\nconst topProblemas = problemasIdentificados.slice(0, 5).map(p => {\n  return `${p.palabra} (${p.frecuencia} menciones en ${p.aspecto})`;\n});\n\n// ====================================================\n// IDENTIFICAR FORTALEZAS\n// ====================================================\n\nconst palabrasPositivasComunes = {\n  limpieza: ['impecable', 'limpio', 'brillante', 'perfecto', 'excelente'],\n  comida: ['delicioso', 'variedad', 'fresco', 'calidad', 'espectacular'],\n  personal: ['amable', 'atento', 'profesional', 'servicial', 'simpático'],\n  instalaciones: ['moderno', 'renovado', 'hermoso', 'equipado', 'cómodo']\n};\n\nconst fortalezasIdentificadas = [];\nconst comentariosPositivos = comentarios.filter(c => c.sentimiento === 'positivo');\n\ncomentariosPositivos.forEach(comentario => {\n  const texto = comentario.texto.toLowerCase();\n  const aspecto = comentario.aspecto_principal;\n  \n  const palabrasClave = palabrasPositivasComunes[aspecto] || [];\n  \n  palabrasClave.forEach(palabra => {\n    if (texto.includes(palabra)) {\n      const existente = fortalezasIdentificadas.find(f => f.palabra === palabra);\n      if (existente) {\n        existente.frecuencia++;\n      } else {\n        fortalezasIdentificadas.push({\n          palabra: palabra,\n          aspecto: aspecto,\n          frecuencia: 1\n        });\n      }\n    }\n  });\n});\n\nfortalezasIdentificadas.sort((a, b) => b.frecuencia - a.frecuencia);\n\nconst topFortalezas = fortalezasIdentificadas.slice(0, 5).map(f => {\n  return `${f.palabra} (${f.frecuencia} menciones en ${f.aspecto})`;\n});\n\n// ====================================================\n// GENERAR RECOMENDACIONES\n// ====================================================\n\nconst recomendaciones = [];\n\n// Recomendaciones basadas en sentimiento general\nif (porcentajeNegativos > 30) {\n  recomendaciones.push({\n    prioridad: 'alta',\n    area: 'general',\n    accion: 'Atención urgente: Más del 30% de comentarios son negativos'\n  });\n}\n\nif (porcentajePositivos > 70) {\n  recomendaciones.push({\n    prioridad: 'baja',\n    area: 'general',\n    accion: 'Mantener el buen trabajo: Alta satisfacción general'\n  });\n}\n\n// Recomendaciones basadas en problemas específicos\nproblemasIdentificados.slice(0, 3).forEach(problema => {\n  let accion = '';\n  \n  switch(problema.aspecto) {\n    case 'limpieza':\n      accion = `Reforzar el equipo de limpieza y protocolos (problema: ${problema.palabra})`;\n      break;\n    case 'comida':\n      accion = `Revisar menús y calidad de ingredientes (problema: ${problema.palabra})`;\n      break;\n    case 'personal':\n      accion = `Capacitación en atención al cliente (problema: ${problema.palabra})`;\n      break;\n    case 'instalaciones':\n      accion = `Evaluar renovación o mantenimiento (problema: ${problema.palabra})`;\n      break;\n  }\n  \n  recomendaciones.push({\n    prioridad: problema.frecuencia > 2 ? 'alta' : 'media',\n    area: problema.aspecto,\n    accion: accion\n  });\n});\n\n// Recomendaciones basadas en fortalezas (potenciar)\nif (topFortalezas.length > 0) {\n  recomendaciones.push({\n    prioridad: 'baja',\n    area: 'marketing',\n    accion: `Destacar en comunicación: ${topFortalezas[0].split(' (')[0]}`\n  });\n}\n\n// ====================================================\n// ANÁLISIS TEMPORAL (si hay fechas)\n// ====================================================\n\nconst fechas = comentarios.map(c => new Date(c.fecha)).filter(f => !isNaN(f));\nlet tendenciaTemporal = 'No hay suficientes datos temporales';\n\nif (fechas.length > 5) {\n  // Dividir en primera y segunda mitad\n  fechas.sort((a, b) => a - b);\n  const mitad = Math.floor(fechas.length / 2);\n  \n  const primeraMetadComentarios = comentarios.slice(0, mitad);\n  const segundaMetadComentarios = comentarios.slice(mitad);\n  \n  const positivosPrimera = primeraMetadComentarios.filter(c => c.sentimiento === 'positivo').length;\n  const positivosSegunda = segundaMetadComentarios.filter(c => c.sentimiento === 'positivo').length;\n  \n  const porcentajePrimera = (positivosPrimera / primeraMetadComentarios.length) * 100;\n  const porcentajeSegunda = (positivosSegunda / segundaMetadComentarios.length) * 100;\n  \n  const diferencia = porcentajeSegunda - porcentajePrimera;\n  \n  if (diferencia > 10) {\n    tendenciaTemporal = 'Tendencia positiva: La satisfacción ha mejorado recientemente';\n  } else if (diferencia < -10) {\n    tendenciaTemporal = 'Tendencia negativa: La satisfacción ha empeorado recientemente';\n  } else {\n    tendenciaTemporal = 'Tendencia estable: Sin cambios significativos en el tiempo';\n  }\n}\n\n// ====================================================\n// GENERAR RESUMEN EJECUTIVO\n// ====================================================\n\nlet nivelSatisfaccion = '';\nif (puntuacionPromedio >= 4.5) nivelSatisfaccion = 'Excelente';\nelse if (puntuacionPromedio >= 4.0) nivelSatisfaccion = 'Muy bueno';\nelse if (puntuacionPromedio >= 3.5) nivelSatisfaccion = 'Bueno';\nelse if (puntuacionPromedio >= 3.0) nivelSatisfaccion = 'Regular';\nelse nivelSatisfaccion = 'Necesita mejora urgente';\n\nconst resumenEjecutivo = `Análisis de ${totalComentarios} comentarios sobre ${metadata.aspecto || 'varios aspectos'}. ` +\n  `Nivel de satisfacción: ${nivelSatisfaccion} (${puntuacionPromedio}/5). ` +\n  `${porcentajePositivos}% positivos, ${porcentajeNegativos}% negativos. ` +\n  `${topProblemas.length > 0 ? 'Principales problemas: ' + topProblemas.slice(0, 2).join(', ') + '.' : 'No se identificaron problemas críticos.'} ` +\n  `${tendenciaTemporal}`;\n\n// ====================================================\n// RETORNAR ANÁLISIS COMPLETO\n// ====================================================\n\nreturn {\n  json: {\n    success: true,\n    resumen_ejecutivo: resumenEjecutivo,\n    resumen: {\n      total_comentarios: totalComentarios,\n      positivos: positivos,\n      negativos: negativos,\n      neutros: neutros,\n      porcentaje_positivos: porcentajePositivos,\n      porcentaje_negativos: porcentajeNegativos,\n      porcentaje_neutros: porcentajeNeutros,\n      puntuacion_promedio: parseFloat(puntuacionPromedio),\n      nivel_satisfaccion: nivelSatisfaccion\n    },\n    problemas_identificados: topProblemas,\n    fortalezas: topFortalezas,\n    recomendaciones: recomendaciones,\n    tendencia_temporal: tendenciaTemporal,\n    metadata: {\n      ...metadata,\n      fecha_analisis: new Date().toISOString(),\n      version_analisis: '1.0'\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "d57d8f4d-3b09-41f9-8282-1f0044cc49a1",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        640,
+        0
+      ],
+      "id": "9ef7f12e-d04f-41b5-bf64-4dac910b86b6",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1e3a7443-1750-433e-91cb-aaa9c667d4cf",
+  "meta": {
+    "instanceId": "ce09a7a8ff547fda6a7e9fa3b3e0205239479ec37afde273eaa6c341c6a8c176"
+  },
+  "id": "eSo4h1seoPRSJZ4X",
+  "tags": []
+}
