@@ -22,5 +22,3 @@ Agente conversacional inteligente que analiza menciones reales de TripAdvisor pa
 - **Backend**: n8n (automatización)
 - **Base de datos**: Google Sheets
 - **APIs**: Webhooks n8n
-
-## 📁 Estructura del Proyecto
